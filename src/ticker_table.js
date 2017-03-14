@@ -1,4 +1,4 @@
-import React, { Component } from 'react'
+import React, { PropTypes } from 'react'
 
 import {
   Table,
@@ -14,12 +14,12 @@ const styles = {
   increase: { backgroundColor: 'green'},
 }
 
-class TickerTable extends Component {
-  renderTableBody() {
-    const { stocks } = this.props
-    const maxTickNo = Math.max.apply(Math,stocks.map((s) => { return s.tickNo } ))
+function TickerTable(props) {
+  const renderTableBody = props =>  {
 
-    const stocksBody = stocks.map((stock) => {
+    const maxTickNo = Math.max.apply(Math,props.stocks.map((s) => { return s.tickNo } ))
+
+    const stocksBody = props.stocks.map((stock) => {
       if(stock.tickNo === maxTickNo) {
         return (
           <TableRow key={stock.symbol}>
@@ -41,24 +41,25 @@ class TickerTable extends Component {
     })
     return stocksBody
   }
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHeaderColumn>Symbol</TableHeaderColumn>
+          <TableHeaderColumn>Price</TableHeaderColumn>
+          <TableHeaderColumn>Change</TableHeaderColumn>
+          <TableHeaderColumn>Change %</TableHeaderColumn>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {renderTableBody(props)}
+      </TableBody>
+    </Table>
+  )
+}
 
-  render() {
-    return (
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHeaderColumn>Symbol</TableHeaderColumn>
-            <TableHeaderColumn>Price</TableHeaderColumn>
-            <TableHeaderColumn>Change</TableHeaderColumn>
-            <TableHeaderColumn>Change %</TableHeaderColumn>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {this.renderTableBody()}
-        </TableBody>
-      </Table>
-    )
-  }
+TickerTable.propTypes = {
+  stocks: PropTypes.array,
 }
 
 export default TickerTable

@@ -36,44 +36,61 @@ class App extends Component {
 
   componentDidMount() {
     socket.on('message', (updateStocks) => {
-      // Creating a new object for the stocks in state
       const stateStocks = this.state.stocks
-      const allStocks = updateStocks.concat(stateStocks)
-      // Filtering so we send the updated prices along with the unchanged stocks,
-      // Sorted to keeep the stocks from jumping on screen when changed
-      const newStocks = collection.sortBy(array.uniqBy(allStocks, 'symbol'), (stock) => { return stock.symbol})
+      const updatedStocks = this.createNewStocks(stateStocks, updateStocks)
 
-      // Creating the chartdata
-      const latestsTick = updateStocks[0].tickNo
       const newTicks = this.state.chartData.labels
-      newTicks.push(latestsTick)
-      // Adding the new prices to the dataset
-      const chartStocks = this.state.chartData.datasets
-      let currentDataLength
-      updateStocks.map((stock) => {
-        chartStocks.forEach((dataLabel, index) => {
-          if (stock.symbol === dataLabel.label) {
-            chartStocks[index].data.push(stock.price)
-            currentDataLength = chartStocks[index].data.length
-          }
-        })
-      })
-      // Syncing all datasets (the ones that wasnt updated gets the same price again)
-      chartStocks.map((stock) => {
-        if (stock.data.length < currentDataLength) {
-          stock.data.push(stock.data[currentDataLength - 2])
-        }
-      })
+      const updatedTicks = this.createTicks(updateStocks, newTicks)
+
+      const currentChartStocks = this.state.chartData.datasets
+      const updatedChartData = this.createChartData(updateStocks, currentChartStocks)
 
       this.setState({
-        stocks: newStocks,
+        stocks: updatedStocks,
         chartData: {
           type: 'line',
-          labels: newTicks,
-          datasets: chartStocks,
+          labels: updatedTicks,
+          datasets: updatedChartData,
         },
       })
     })
+  }
+
+  createNewStocks(stateStocks, updateStocks) {
+    const allStocks = updateStocks.concat(stateStocks)
+    const newStocks = collection.sortBy(
+      array.uniqBy(allStocks, 'symbol'),
+      (stock) => { return stock.symbol}
+    )
+
+    return newStocks
+  }
+
+  createTicks(updateStocks, newTicks) {
+    const latestsTick = updateStocks[0].tickNo
+    newTicks.push(latestsTick)
+    return newTicks
+  }
+
+  createChartData(updateStocks, currentChartStocks) {
+    let currentDataLength
+
+    updateStocks.map((stock) => {
+      currentChartStocks.forEach((dataLabel, index) => {
+        if (stock.symbol === dataLabel.label) {
+          currentChartStocks[index].data.push(stock.price)
+          currentDataLength = currentChartStocks[index].data.length
+        }
+      })
+    })
+
+    // Syncing all datasets (the ones that wasnt updated gets the same price again)
+    currentChartStocks.map((stock) => {
+      if (stock.data.length < currentDataLength) {
+        stock.data.push(stock.data[currentDataLength - 2])
+      }
+    })
+    return currentChartStocks
   }
 
   render() {
